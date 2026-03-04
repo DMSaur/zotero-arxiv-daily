@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import traceback
 from omegaconf import DictConfig
 import hydra
 from loguru import logger
@@ -19,7 +20,7 @@ def main(config:DictConfig):
         level=log_level,
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
     )
-    
+
     for logger_name in logging.root.manager.loggerDict:
         if "zotero_arxiv_daily" in logger_name:
             continue
@@ -27,9 +28,14 @@ def main(config:DictConfig):
 
     if config.executor.debug:
         logger.info("Debug mode is enabled")
-    
-    executor = Executor(config)
-    executor.run()
+
+    try:
+        executor = Executor(config)
+        executor.run()
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
