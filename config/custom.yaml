@@ -16,7 +16,7 @@ llm:
     base_url: ${oc.env:OPENAI_API_BASE}
   generation_kwargs:
     model: deepseek-chat
-    max_tokens: 16384
+    max_tokens: 8000
 
 source:
   arxiv:

@@ -104,17 +104,35 @@ def send_email(config:DictConfig, html:str):
     today = datetime.datetime.now().strftime('%Y/%m/%d')
     msg['Subject'] = Header(f'Daily arXiv {today}', 'utf-8').encode()
 
+    server = None
     try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-    except Exception as e:
-        logger.debug(f"Failed to use TLS. {e}\nTry to use SSL.")
-        try:
-            server = smtplib.SMTP_SSL(smtp_server, smtp_port)
-        except Exception as e:
-            logger.debug(f"Failed to use SSL. {e}\nTry to use plain text.")
-            server = smtplib.SMTP(smtp_server, smtp_port)
+        # For port 465, use SMTP_SSL directly
+        if smtp_port == 465:
+            logger.info(f"Using SMTP_SSL for port {smtp_port}")
+            server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=30)
+        else:
+            # For port 587, use STARTTLS
+            logger.info(f"Using SMTP with STARTTLS for port {smtp_port}")
+            server = smtplib.SMTP(smtp_server, smtp_port, timeout=30)
+            server.starttls()
 
-    server.login(sender, password)
-    server.sendmail(sender, [receiver], msg.as_string())
-    server.quit()
+        logger.info(f"SMTP connection established to {smtp_server}:{smtp_port}")
+        server.login(sender, password)
+        logger.info(f"SMTP login successful for {sender}")
+        server.sendmail(sender, [receiver], msg.as_string())
+        logger.info(f"Email sent successfully to {receiver}")
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP Authentication failed: {e}. Please check your sender_password (authorization code).")
+        raise
+    except smtplib.SMTPServerDisconnected as e:
+        logger.error(f"SMTP server disconnected: {e}. This may be due to network issues or server timeout.")
+        raise
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+        raise
+    finally:
+        if server:
+            try:
+                server.quit()
+            except:
+                pass
