@@ -94,3 +94,59 @@ except Exception as e:
 print("\n" + "=" * 50)
 print("TEST COMPLETE")
 print("=" * 50)
+
+# Test SMTP connection
+print("\n6. SMTP Connection Test:")
+try:
+    import smtplib
+    sender = os.environ.get('SENDER', '')
+    password = os.environ.get('SENDER_PASSWORD', '')
+
+    if not sender:
+        print("   [SKIP] SENDER not set")
+    elif not password:
+        print("   [SKIP] SENDER_PASSWORD not set")
+    else:
+        print(f"   Testing QQ SMTP with sender: {sender}")
+
+        # Test with SMTP_SSL (port 465)
+        try:
+            print("   Trying SMTP_SSL on port 465...")
+            server = smtplib.SMTP_SSL("smtp.qq.com", 465, timeout=30)
+            server.ehlo()
+            print("   [OK] Connection and ehlo() successful")
+            try:
+                server.login(sender, password)
+                print("   [OK] Login successful")
+                server.quit()
+            except smtplib.SMTPAuthenticationError as e:
+                print(f"   [ERROR] Authentication failed: {e}")
+                print("   HINT: Make sure SENDER_PASSWORD is the SMTP authorization code, not QQ password")
+            except Exception as e:
+                print(f"   [ERROR] Login failed: {e}")
+        except Exception as e:
+            print(f"   [ERROR] SMTP_SSL connection failed: {e}")
+
+        # Test with STARTTLS (port 587)
+        try:
+            print("   Trying STARTTLS on port 587...")
+            server = smtplib.SMTP("smtp.qq.com", 587, timeout=30)
+            server.ehlo()
+            server.starttls()
+            print("   [OK] Connection, ehlo() and starttls() successful")
+            try:
+                server.login(sender, password)
+                print("   [OK] Login successful")
+                server.quit()
+            except smtplib.SMTPAuthenticationError as e:
+                print(f"   [ERROR] Authentication failed: {e}")
+            except Exception as e:
+                print(f"   [ERROR] Login failed: {e}")
+        except Exception as e:
+            print(f"   [ERROR] STARTTLS connection failed: {e}")
+except Exception as e:
+    print(f"   [ERROR] {e}")
+
+print("\n" + "=" * 50)
+print("ALL TESTS COMPLETE")
+print("=" * 50)
