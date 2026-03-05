@@ -36,13 +36,18 @@ class Paper:
         if not self.full_text and not self.abstract:
             logger.warning(f"Neither full text nor abstract is provided for {self.url}")
             return "Failed to generate TLDR. Neither full text nor abstract is provided"
-        
+
         # use gpt-4o tokenizer for estimation
         enc = tiktoken.encoding_for_model("gpt-4o")
         prompt_tokens = enc.encode(prompt)
         prompt_tokens = prompt_tokens[:4000]  # truncate to 4000 tokens
         prompt = enc.decode(prompt_tokens)
-        
+
+        # Ensure max_tokens is within valid range
+        generation_kwargs = llm_params.get('generation_kwargs', {}).copy()
+        max_tokens = generation_kwargs.get('max_tokens', 4096)
+        generation_kwargs['max_tokens'] = min(int(max_tokens), 4096)
+
         response = openai_client.chat.completions.create(
             messages=[
                 {
@@ -51,7 +56,7 @@ class Paper:
                 },
                 {"role": "user", "content": prompt},
             ],
-            **llm_params.get('generation_kwargs', {})
+            **generation_kwargs
         )
         tldr = response.choices[0].message.content
         return tldr
@@ -75,6 +80,12 @@ class Paper:
             prompt_tokens = enc.encode(prompt)
             prompt_tokens = prompt_tokens[:2000]  # truncate to 2000 tokens
             prompt = enc.decode(prompt_tokens)
+
+            # Ensure max_tokens is within valid range
+            generation_kwargs = llm_params.get('generation_kwargs', {}).copy()
+            max_tokens = generation_kwargs.get('max_tokens', 4096)
+            generation_kwargs['max_tokens'] = min(int(max_tokens), 4096)
+
             affiliations = openai_client.chat.completions.create(
                 messages=[
                     {
@@ -83,7 +94,7 @@ class Paper:
                     },
                     {"role": "user", "content": prompt},
                 ],
-                **llm_params.get('generation_kwargs', {})
+                **generation_kwargs
             )
             affiliations = affiliations.choices[0].message.content
 
