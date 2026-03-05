@@ -106,19 +106,18 @@ def send_email(config:DictConfig, html:str):
 
     server = None
     try:
-        # For port 465, use SMTP_SSL with ehlo() before login (required for QQ mail)
+        # For QQ mail, port 465 with SMTP_SSL works best (no ehlo needed before login)
         if smtp_port == 465:
             logger.info(f"Using SMTP_SSL for port {smtp_port}")
             server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=60)
-            server.ehlo()
-            logger.debug("SMTP ehlo() completed")
+            logger.info("SMTP_SSL connection established")
         elif smtp_port == 587:
             # For port 587, use SMTP with STARTTLS
             logger.info(f"Using SMTP with STARTTLS for port {smtp_port}")
             server = smtplib.SMTP(smtp_server, smtp_port, timeout=60)
             server.ehlo()
             server.starttls()
-            logger.debug("SMTP ehlo() and starttls() completed")
+            logger.info("SMTP STARTTLS connection established")
         else:
             # Other ports, try STARTTLS
             logger.info(f"Using SMTP for port {smtp_port}")
