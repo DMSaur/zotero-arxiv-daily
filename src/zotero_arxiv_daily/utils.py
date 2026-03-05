@@ -106,17 +106,18 @@ def send_email(config:DictConfig, html:str):
 
     server = None
     try:
-        # For QQ mail, port 465 with SMTP_SSL works best (no ehlo needed before login)
+        # For Gmail, port 587 with STARTTLS is recommended
         if smtp_port == 465:
             logger.info(f"Using SMTP_SSL for port {smtp_port}")
             server = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=60)
             logger.info("SMTP_SSL connection established")
         elif smtp_port == 587:
-            # For port 587, use SMTP with STARTTLS
+            # For port 587, use SMTP with STARTTLS (recommended for Gmail)
             logger.info(f"Using SMTP with STARTTLS for port {smtp_port}")
             server = smtplib.SMTP(smtp_server, smtp_port, timeout=60)
             server.ehlo()
             server.starttls()
+            server.ehlo()  # Re-send ehlo after STARTTLS for Gmail
             logger.info("SMTP STARTTLS connection established")
         else:
             # Other ports, try STARTTLS
